@@ -1,40 +1,95 @@
 """
-Structured Data (JSON-LD) Finder Tool
+tools/structured_data_json_ld_finder/structured_data_json_ld_finder.py
 
-This tool extracts all JSON-LD structured data blocks from a web page.
-It is useful for checking if the page contains schema.org markup and for validating
-the presence and count of structured data for SEO purposes.
+Structured Data Finder Tool.
 """
 
+import streamlit as st
+import requests
+from bs4 import BeautifulSoup
+import json
 from tools.base_tool import BaseTool
-from core.utils import get_page_content
 
-class StructuredDataJSONLDFinder(BaseTool):
+class StructuredDataFinder(BaseTool):
     def __init__(self):
         super().__init__(
-            name="Structured Data (JSON-LD) Finder",
-            description="Finds and returns all JSON-LD structured data blocks from the web page."
+            name="Structured Data Finder",
+            description="Finds and extracts JSON-LD structured data from a webpage."
         )
 
     def run(self, url: str) -> dict:
         """
-        Fetch the page and extract all <script type="application/ld+json"> blocks.
-        Returns a dict containing the count and content of all JSON-LD blocks found.
+        Finds and extracts JSON-LD structured data from a webpage.
         """
-        soup = get_page_content(url)
-        if not soup:
-            return {"error": "Could not fetch page content."}
+        st.text("StructuredDataFinder tool is running...")
+        structured_data_list = []
+        try:
+            st.info(f"Fetching content from: {url}")
+            response = requests.get(url, timeout=10)
+            if response.status_code != 200:
+                return {
+                    "status": "Error",
+                    "message": f"Could not fetch page content. Status code: {response.status_code}"
+                }
 
-        json_ld_blocks = []
-        for script in soup.find_all("script", type="application/ld+json"):
-            if script.string:
-                json_ld_blocks.append(script.string.strip())
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            json_ld_scripts = soup.find_all('script', type='application/ld+json')
 
-        count = len(json_ld_blocks)
-        message = f"Found {count} JSON-LD structured data block(s) on the page." if count else "No JSON-LD structured data found on the page."
+            if not json_ld_scripts:
+                return {
+                    "status": "Info",
+                    "message": "No JSON-LD structured data found on the page."
+                }
 
-        return {
-            "json_ld_count": count,
-            "json_ld_blocks": json_ld_blocks,
-            "message": message
-        }
+            for script in json_ld_scripts:
+                try:
+                    data = json.loads(script.string)
+                    structured_data_list.append(data)
+                except json.JSONDecodeError as e:
+                    structured_data_list.append({
+                        "error": "JSON Decode Error",
+                        "message": str(e),
+                        "script_content": script.string
+                    })
+
+            if structured_data_list:
+                return {
+                    "status": "Success",
+                    "message": f"Found {len(structured_data_list)} JSON-LD structured data blocks.",
+                    "structured_data": structured_data_list
+                }
+            else:
+                return {
+                    "status": "Warning",
+                    "message": "Found <script type='application/ld+json'> tags, but could not parse the content.",
+                    "structured_data": structured_data_list
+                }
+
+        except requests.exceptions.RequestException as e:
+            return {
+                "status": "Error",
+                "message": f"An error occurred while fetching the page: {e}"
+            }
+
+# Streamlit UI (for testing or as a standalone tool page)
+if __name__ == "__main__":
+    st.title("Structured Data Finder")
+    st.write("Enter a URL to find JSON-LD structured data.")
+    url = st.text_input("Enter URL", placeholder="https://www.example.com")
+    
+    if st.button("Run Analysis") and url:
+        tool = StructuredDataFinder()
+        result = tool.run(url)
+        
+        st.subheader("Results")
+        if result["status"] == "Error":
+            st.error(result["message"])
+        elif result["status"] == "Warning":
+            st.warning(result["message"])
+            st.json(result["structured_data"])
+        elif result["status"] == "Success":
+            st.success(result["message"])
+            st.json(result["structured_data"])
+        else:
+            st.info(result["message"])

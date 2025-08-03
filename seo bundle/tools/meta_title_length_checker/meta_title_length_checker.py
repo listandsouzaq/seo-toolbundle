@@ -42,7 +42,8 @@ class MetaTitleLengthChecker(BaseTool):
         }
 
 # Streamlit UI (for testing or as a standalone tool page)
-if __name__ == "__main__" or st._is_running_with_streamlit:
+# This line has been corrected to use a standard Python check.
+if __name__ == "__main__":
     st.title("Meta Title Length Checker")
     st.write("Analyze the meta title length of any web page for optimal SEO.")
     url = st.text_input("Enter URL to analyze")

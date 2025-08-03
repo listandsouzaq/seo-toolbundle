@@ -1,11 +1,8 @@
-# requirements.txt
-# List all Python dependencies for a comprehensive SEO toolkit.
-# Include Streamlit, web scraping libraries, and other necessary modules.
-# List them one per line.
 streamlit
 requests
 beautifulsoup4
+lxml
 html-minifier
 css-html-js-minify
 whois
-flesch-kincaid
+textstat
