@@ -1,0 +1,9 @@
+pip==25.2
+streamlit==1.37.0
+requests==2.32.3
+beautifulsoup4==4.12.3
+lxml==5.2.2
+htmlmin==0.1.12
+css-html-js-minify==2.5.5
+python-whois==0.9.3
+textstat==0.7.3

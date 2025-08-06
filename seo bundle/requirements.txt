@@ -1,8 +1,0 @@
-streamlit
-requests
-beautifulsoup4
-lxml
-html-minifier
-css-html-js-minify
-whois
-textstat
